@@ -1,0 +1,420 @@
+<html lang="en">
+    <head>
+
+        <meta charset="UTF-8">
+        <title>Match Lobby</title>
+
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+        <style type="text/css">
+            /* Fix user-agent */
+
+            * {
+              box-sizing: border-box;
+            }
+
+            html {
+              font-weight: 300;
+              -webkit-font-smoothing: antialiased;
+            }
+
+            html, input {
+              font-family:
+                "HelveticaNeue-Light",
+                "Helvetica Neue Light",
+                "Helvetica Neue",
+                Helvetica,
+                Arial,
+                "Lucida Grande",
+                sans-serif;
+            }
+
+            html, body {
+              height: 100%;
+              margin: 0;
+              padding: 0;
+            }
+
+            ul {
+              list-style: none;
+              word-wrap: break-word;
+            }
+
+            /* Pages */
+
+            .pages {
+              height: 100%;
+              margin: 0;
+              padding: 0;
+              width: 100%;
+            }
+
+            .page {
+              height: 100%;
+              position: absolute;
+              width: 100%;
+            }
+
+            /* Login Page */
+
+            .login.page {
+              background-color: #000;
+            }
+
+            .login.page .form {
+              height: 100px;
+              margin-top: -100px;
+              position: absolute;
+
+              text-align: center;
+              top: 50%;
+              width: 100%;
+            }
+
+            .login.page .form .usernameInput {
+              background-color: transparent;
+              border: none;
+              border-bottom: 2px solid #fff;
+              outline: none;
+              padding-bottom: 15px;
+              text-align: center;
+              width: 400px;
+            }
+
+            .login.page .title {
+              font-size: 200%;
+            }
+
+            .login.page .usernameInput {
+              font-size: 200%;
+              letter-spacing: 3px;
+            }
+
+            .login.page .title, .login.page .usernameInput {
+              color: #fff;
+              font-weight: 100;
+            }
+
+            /* Chat page */
+
+            .chat.page {
+              display: none;
+            }
+
+            /* Font */
+
+            .messages {
+              font-size: 150%;
+            }
+
+            .inputMessage {
+              font-size: 100%;
+            }
+
+            .log {
+              color: gray;
+              font-size: 70%;
+              margin: 5px;
+              text-align: center;
+            }
+
+            /* Messages */
+
+            .chatArea {
+              height: 100%;
+              padding-bottom: 60px;
+              padding-top: 60px;
+            }
+
+            .messages {
+              height: 100%;
+              margin: 0;
+              overflow-y: scroll;
+              padding: 10px 20px 10px 20px;
+            }
+
+            .message.typing .messageBody {
+              color: gray;
+            }
+
+            .username {
+              font-weight: 700;
+              overflow: hidden;
+              padding-right: 15px;
+              text-align: right;
+            }
+
+            /* Input */
+
+            .inputMessage {
+              border: 10px solid #000;
+              bottom: 0;
+              height: 60px;
+              left: 0;
+              outline: none;
+              padding-left: 10px;
+              position: absolute;
+              right: 0;
+              width: 100%;
+            }
+
+            .inputField {
+                border: 5px solid #000;
+                display: block;
+                height: 50px;
+                left: 30%;
+                width: 35%;
+                margin-top: 25px;
+                position: relative;
+            }
+            .inputButton {
+                display: block;
+                height: 50px;
+                left: 30%;
+                width: 35%;
+                margin-top: 25px;
+                position: relative;
+            }
+            .avatar {
+              vertical-align: middle;
+              width: 50px;
+              height: 50px;
+              border-radius: 50%;
+            }
+            .leftTextCell {
+                text-align: right;
+            }
+            .rightTextCell {
+                text-align: left;
+            }
+            .full-width {
+                width: 100%;
+            }
+            .no-stretch {
+                width:1%;
+                white-space:nowrap;
+            }
+            .nameCell {
+                font-size: 12px;
+                color: #7979b7;
+            }
+            .imageCell {
+                width: 50px;
+            }
+            .emptyCell {
+                width: 20%;
+            }
+            .logoutBar {
+                position: absolute;
+                height: 60px;
+                top: 0;
+                left: 0;
+                width: 100%
+            }
+            .logoutButton {
+                position: relative;;
+                height: 50px;
+                width: 100px;
+                top: 5px;
+                right: 50px;
+                float: right;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="lobby">
+            <div id="logout" class="logoutBar" style="display:none">
+                <button class="logoutButton" v-on:click="leave"><label>Leave</label></button>
+            </div>
+        <div id="chat" class="chatArea" style="display:none">
+            <ul id="messages" class="messages">
+                <li v-for="(message, index) in messages">
+                    <table class="full-width">
+                        <template v-if="selfId != message.user.id">
+                            <tr class="row">
+                                <td class="imageCell cell" rowspan="2"><img v-show="index == 0 || message.user.id != messages[index - 1].user.id" class="avatar" :src="message.user.avatar"></td>
+                                <td class="nameCell cell" v-if="index == 0 || message.user.id != messages[index - 1].user.id">{{ message.user.username }}</td>
+                                <td class="nameCell cell" v-else>&nbsp</td>
+                                <td class="emptyCell"></td>
+                            </tr>
+                            <tr>
+                                <td class="rightTextCell cell">{{ message.text }}</td>
+                                <td class="emptyCell"></td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr class="row">
+                                <td class="emptyCell"></td>
+                                <td class="nameCell cell leftTextCell" v-if="index == 0 || message.user.id != messages[index - 1].user.id">{{ message.user.username }}</td>
+                                <td class="nameCell cell leftTextCell" v-else>&nbsp;</td>
+                                <td class="imageCell cell" rowspan="2"><img v-show="index == 0 || message.user.id != messages[index - 1].user.id" class="avatar" :src="message.user.avatar"></td>
+                            </tr>
+                            <tr>
+                                <td class="emptyCell"></td>
+                                <td class="leftTextCell cell">{{ message.text }}</td>
+                            </tr>
+                        </template>
+                    </table>
+                    
+                </li>
+            </ul>
+
+            <form v-on:submit="send">
+                <input class="inputMessage" placeholder="Type here..." v-model="message">
+                
+            </form>
+
+        </div>
+
+        <div id="login" style="display:block">
+            <form v-on:submit="login">
+                <input class="inputField" placeholder="Email" v-model="email">
+                <input class="inputField" placeholder="Password" type="password" v-model="password">
+                <input class="inputButton" type="submit" value="Login">
+            </form>
+        </div>
+
+        </div>
+
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+        <script>
+            function joinRoom(bearer, token) {
+              this.password = '';
+              document.getElementById("login").style.display = "none";
+              document.getElementById("logout").style.display = "block";
+              document.getElementById("chat").style.display = "block";
+              socket.emit('chat.join', {bearer: bearer, room: token});
+              console.log('chat.join', JSON.stringify({bearer: bearer, room: token}));
+            }
+            var bearer = null;
+            var token = '<%= token %>';
+            var socket = io('http://127.0.0.1:3000');
+            socket.on('connection', socket => {
+                //alert('connected');
+                //console.log('connected');
+                //socket.join(token);
+                //socket.emit('chat.join', token);
+            });
+            //var socket = io();
+
+            new Vue({
+                el: '#lobby',
+
+                data: {
+                    messages: [],
+                    message: '',
+                    email: '',
+                    password: '',
+                    selfId: 0
+                },
+
+                mounted: function() {
+                    var vm = this;
+                    if (localStorage.getItem('bearer')) {
+                      bearer = localStorage.getItem('bearer');
+                      joinRoom(bearer, token);
+                    }
+                    socket.on('chat.new_message', function(message) {
+                        console.log('chat.new_message', JSON.stringify(message));
+                        vm.messages.push(message);
+                    });
+                    socket.on('chat.identify', function(message) {
+                      console.log('chat.identify', JSON.stringify(message));
+                        vm.selfId = message.id;
+                    });
+                    socket.on('chat.messages', function(messages) {
+                        console.log('chat.messages', JSON.stringify(messages));
+                        vm.messages = messages;
+                    });
+                    socket.on('chat.joined', function(message) {
+                        console.log('chat.joined', JSON.stringify(message));
+                        Toastify({
+                              text: message.username + ' joined the lobby!',
+                              duration: 5000,
+                              destination: "",
+                              newWindow: true,
+                              close: true,
+                              gravity: "top", 
+                              position: "left", 
+                              //backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+                              backgroundColor: "#5cb85c",
+                              avatar: message.avatar,
+                              stopOnFocus: true, // Prevents dismissing of toast on hover
+                              onClick: function(){} // Callback after click
+                            }).showToast();
+                        //alert(message.username);
+                    });
+                    socket.on('chat.left', function(message) {
+                        console.log('chat.left', JSON.stringify(message));
+                        Toastify({
+                              text: message.username + ' left the lobby!',
+                              duration: 5000,
+                              destination: "",
+                              newWindow: true,
+                              close: true,
+                              gravity: "top", 
+                              position: "left", 
+                              //backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+                              backgroundColor: "#292b2c",
+                              avatar: message.avatar,
+                              stopOnFocus: true, // Prevents dismissing of toast on hover
+                              onClick: function(){} // Callback after click
+                            }).showToast();
+                        //alert(message.username);
+                    });
+
+                },
+
+                methods: {
+                    send: function(e) {
+                        socket.emit('chat.message', {text: this.message});
+                        console.log('chat.message', JSON.stringify({text: this.message}));
+                        this.message = '';
+                        e.preventDefault();
+                    },
+                    login: function(e) {
+                        e.preventDefault();
+                        axios.post('http://lairgg.test/login', {
+                            "grant_type": "password",
+                            "client_id": "2",
+                            "client_secret": "8unH9NsZBJzU6nZ9egeqRFARQMnEgQMDE7yL3hbn",
+                            "username": this.email,
+                            "password": this.password,
+                            "scope": "*"
+                          })
+                          .then(function (response) {
+                            bearer = response.data.access_token;
+                            localStorage.setItem('bearer', bearer);
+                            localStorage.setItem('eamil', this.email);
+                            //this.email = '';
+                            joinRoom(bearer, token);
+                          })
+                          .catch(function (error) {
+                            console.log(error);
+                            localStorage.setItem('bearer', '');
+                            alert("401");
+                          });
+                    },
+                    leave: function(e) {
+                        socket.emit('chat.leave', this.selfId);
+                        console.log('chat.leave', this.selfId);
+                        this.message = '';
+                        this.messages = [];
+                        this.selfId = 0;
+                        document.getElementById("login").style.display = "block";
+                        document.getElementById("logout").style.display = "none";
+                        document.getElementById("chat").style.display = "none";
+                        localStorage.setItem('bearer', '');
+                        localStorage.setItem('eamil', '');
+                        e.preventDefault();
+                    }
+                }
+            });
+        </script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+   </body>
+</html>
